@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dot Swahili - AI Feedback Groups</title>
+    <link rel="stylesheet" href="/dashboard/style.css?v=20260317e" />
+    <style>
+      .group-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+      .group-count {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--accent, #2563eb);
+      }
+      .type-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .type-badge.rain_seen { background: #bfdbfe; color: #1e40af; }
+      .type-badge.flood      { background: #fce7f3; color: #9d174d; }
+      .type-badge.storm      { background: #e0e7ff; color: #4338ca; }
+      .type-badge.dry_soil   { background: #fef3c7; color: #92400e; }
+      .type-badge.pest       { background: #d1fae5; color: #065f46; }
+      .type-badge.unknown    { background: #f3f4f6; color: #374151; }
+      .summary-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+      }
+      .summary-tile {
+        flex: 1 1 140px;
+        background: rgba(255, 255, 255, 0.76);
+        border: 1px solid rgba(18, 42, 36, 0.12);
+        border-radius: 0.95rem;
+        padding: 1rem;
+        text-align: center;
+      }
+      .summary-tile .tile-count {
+        font-size: 2rem;
+        font-weight: 800;
+      }
+      .summary-tile .tile-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-top: 0.25rem;
+        color: var(--muted, #64748b);
+      }
+      .alert-triggered {
+        border-left: 3px solid #f59e0b;
+        padding-left: 0.75rem;
+        margin-top: 0.5rem;
+        font-size: 0.82rem;
+        color: #92400e;
+      }
+      .no-alerts-note {
+        font-size: 0.8rem;
+        color: var(--muted, #64748b);
+        font-style: italic;
+        margin-top: 0.4rem;
+      }
+      .demo-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+      }
+      .demo-status {
+        margin-top: 0.6rem;
+        font-size: 0.85rem;
+        color: var(--muted, #64748b);
+      }
+      .quick-trigger-card {
+        grid-column: 3;
+        grid-row: 1;
+      }
+      .quick-trigger-note {
+        background: rgba(15, 118, 110, 0.08);
+        border: 1px solid rgba(15, 118, 110, 0.2);
+        color: #0f766e;
+        border-radius: 12px;
+        padding: 0.65rem 0.75rem;
+        font-size: 0.84rem;
+        margin-bottom: 0.7rem;
+      }
+      .quick-phone {
+        margin-top: 0.65rem;
+      }
+      .quick-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      @media (max-width: 960px) {
+        .quick-trigger-card {
+          grid-column: span 2;
+          grid-row: auto;
+        }
+      }
+    </style>
+  </head>
+  <body data-page="feedback-groups">
+    <div class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Dot Swahili</p>
+          <h1>AI Feedback Groups</h1>
+          <p class="subtitle">
+            Shows how the AI classified each farmer reply (RAIN, HEAT, …) and when a threshold alert was triggered because 2 or more identical signals were received.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <a class="primary" href="/messages-live">← Back to Messages</a>
+          <button id="refresh" class="ghost">Refresh</button>
+        </div>
+      </header>
+
+      <main class="grid">
+
+        <section class="card quick-trigger-card">
+          <div class="section-head">
+            <h2>Quick Trigger</h2>
+            <span class="pill">Rechtsboven demo</span>
+          </div>
+          <div class="quick-trigger-note">
+            Elke klik verstuurt 2 berichten (EN + SW) voor hetzelfde signaal, zodat de alert direct triggert op drempel 2.
+          </div>
+          <label class="meta" for="target-phone">Jouw telefoonnummer (E.164)</label>
+          <input id="target-phone" class="quick-phone" type="text" placeholder="+32470770258" value="+32470770258" />
+          <div class="quick-actions">
+            <button id="send-test-sms" class="primary">Send Test SMS</button>
+          </div>
+          <div class="demo-actions">
+            <button class="ghost demo-trigger" data-signal="storm">Add Storm</button>
+            <button class="ghost demo-trigger" data-signal="rain">Add Rain</button>
+            <button class="ghost demo-trigger" data-signal="drought">Add Drought</button>
+            <button class="ghost demo-trigger" data-signal="heat">Add Heat</button>
+          </div>
+          <div id="demo-status" class="demo-status">Klaar om te triggeren.</div>
+        </section>
+
+        <!-- Summary overview -->
+        <section class="card span-2">
+          <div class="section-head">
+            <h2>Signal Summary</h2>
+            <span class="pill accent">AI classified</span>
+          </div>
+          <div id="summary-tiles" class="summary-grid">
+            <p class="meta">Loading…</p>
+          </div>
+        </section>
+
+        <!-- Groups per type -->
+        <section class="card span-2">
+          <div class="section-head">
+            <h2>Responses per Group</h2>
+            <span class="pill">Grouped by AI type</span>
+          </div>
+          <div id="groups-list" class="data-list">
+            <p class="meta">Loading…</p>
+          </div>
+        </section>
+
+        <!-- Triggered alerts (sent because threshold hit) -->
+        <section class="card span-2">
+          <div class="section-head">
+            <h2>Triggered Alerts</h2>
+            <span class="pill accent">Sent when 2+ same signals</span>
+          </div>
+          <p class="meta" style="margin-bottom:0.5rem">
+            These alerts were automatically sent because the AI detected repeated farmer signals (threshold: 2 identical feedback types within the configured time window).
+          </p>
+          <div id="alerts-list" class="data-list">
+            <p class="meta">Loading…</p>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <script src="/dashboard/nav.js?v=20260317e"></script>
+    <script src="/dashboard/feedback-groups.js"></script>
+  </body>
+</html>
+
+

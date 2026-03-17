@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dot Swahili - Forecast Delivery Control</title>
+    <link rel="stylesheet" href="/dashboard/style.css?v=20260317e" />
+  </head>
+  <body data-page="forecast-delivery">
+    <div class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Dot Swahili Control</p>
+          <h1>Tomorrow Forecast SMS Delivery</h1>
+          <p class="subtitle">
+            Enable or disable daily SMS for tomorrow's weather. Each message includes expected rain and how sunny it will be.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <a class="primary" href="/dashboard/rain-live.html">Open Live Weather</a>
+          <a class="ghost" href="/dashboard/messages-live.html">Open Real Messages</a>
+        </div>
+      </header>
+
+      <main class="grid">
+        <section class="card span-2">
+          <div class="section-head">
+            <h2>Delivery Switch</h2>
+            <span class="pill accent">Scheduler controlled</span>
+          </div>
+
+          <div class="data-card">
+            <div class="data-top">
+              <strong>Send tomorrow weather SMS</strong>
+              <label class="switch">
+                <input id="delivery-enabled" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="meta" style="margin: 10px 0 6px;">Optional: send now to this GSM number</div>
+            <input id="test-phone" type="text" placeholder="Example: +32470770258" />
+            <div id="settings-status" class="status-line"></div>
+            <div id="last-sent" class="meta"></div>
+          </div>
+
+          <div class="hero-actions">
+            <button id="save-settings" class="primary">Save Setting</button>
+            <button id="send-now" class="ghost">Send Tomorrow Forecast Now</button>
+            <button id="refresh" class="ghost">Refresh</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <h2>What the SMS contains</h2>
+            <span class="pill">Tomorrow data</span>
+          </div>
+          <div class="data-list">
+            <div class="data-card">
+              <div class="meta"><strong>Rain:</strong> Total mm expected tomorrow</div>
+              <div class="meta"><strong>Sun:</strong> Estimated sunny percentage (from cloud cover)</div>
+              <div class="meta"><strong>Conditions:</strong> Visual Crossing summary (for example, Partially cloudy)</div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/dashboard/nav.js?v=20260317e"></script>
+    <script src="/dashboard/forecast-delivery.js?v=20260317c"></script>
+  </body>
+</html>
+
+
