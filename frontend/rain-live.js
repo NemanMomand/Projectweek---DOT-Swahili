@@ -206,9 +206,11 @@ filterForm.addEventListener("submit", (event) => {
   loadLiveWeather();
 });
 
-refreshButton.addEventListener("click", () => {
-  loadLiveWeather();
-});
+if (refreshButton) {
+  refreshButton.addEventListener("click", () => {
+    loadLiveWeather();
+  });
+}
 
 (async () => {
   try {

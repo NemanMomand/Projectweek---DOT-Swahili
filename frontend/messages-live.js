@@ -145,24 +145,51 @@ async function loadMessages(phoneNumber) {
   const query = phoneNumber ? `?phone_number=${encodeURIComponent(phoneNumber)}&real_only=true` : "?real_only=true";
 
   try {
-    const [alertsRaw, smsRaw, repliesRaw] = await Promise.all([
+    const [alertsResult, smsResult, repliesResult] = await Promise.allSettled([
       api(`/api/v1/messages/alerts${query}`, true),
       api(`/api/v1/messages/sms${query}`),
       api(`/api/v1/messages/replies${query}`),
     ]);
+
+    const alertsRaw = alertsResult.status === "fulfilled" ? alertsResult.value : [];
+    const smsRaw = smsResult.status === "fulfilled" ? smsResult.value : [];
+    const repliesRaw = repliesResult.status === "fulfilled" ? repliesResult.value : [];
+
     const alerts = alertsRaw.filter((item) => !isTestRecord(item));
     const sms = smsRaw.filter((item) => !isTestRecord(item));
     const replies = repliesRaw.filter((item) => !isTestRecord(item));
+
     renderKpis(alerts, sms, replies);
     renderAlerts(alerts);
     renderSms(sms);
     renderReplies(replies);
+
+    const failed = [];
+    if (alertsResult.status === "rejected") failed.push("alerts");
+    if (smsResult.status === "rejected") failed.push("sms");
+    if (repliesResult.status === "rejected") failed.push("replies");
+
+    if (failed.length) {
+      statusMessage.textContent = `Partial data loaded. Failed: ${failed.join(", ")} (backend may be down).`;
+      if (alertsResult.status === "rejected") {
+        alertsContainer.innerHTML = "<p class='meta'>Alerts unavailable right now (API error).</p>";
+      }
+      if (smsResult.status === "rejected") {
+        smsContainer.innerHTML = "<p class='meta'>SMS unavailable right now (API error).</p>";
+      }
+      if (repliesResult.status === "rejected") {
+        repliesContainer.innerHTML = "<p class='meta'>Replies unavailable right now (API error).</p>";
+      }
+      return;
+    }
+
     statusMessage.textContent = "Real message dashboard updated.";
   } catch (error) {
-    statusMessage.textContent = error.message;
-    alertsContainer.innerHTML = "";
-    smsContainer.innerHTML = "";
-    repliesContainer.innerHTML = "";
+    statusMessage.textContent = `Backend/API unreachable: ${error.message}`;
+    renderKpis([], [], []);
+    alertsContainer.innerHTML = "<p class='meta'>Alerts unavailable right now (API unreachable).</p>";
+    smsContainer.innerHTML = "<p class='meta'>SMS unavailable right now (API unreachable).</p>";
+    repliesContainer.innerHTML = "<p class='meta'>Replies unavailable right now (API unreachable).</p>";
   }
 }
 
@@ -172,9 +199,11 @@ messageForm.addEventListener("submit", (event) => {
   loadMessages(phone);
 });
 
-refreshButton.addEventListener("click", () => {
-  const phone = messageForm.elements.phone_number.value.trim();
-  loadMessages(phone);
-});
+if (refreshButton) {
+  refreshButton.addEventListener("click", () => {
+    const phone = messageForm.elements.phone_number.value.trim();
+    loadMessages(phone);
+  });
+}
 
 loadMessages("");
