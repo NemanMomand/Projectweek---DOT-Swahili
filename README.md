@@ -297,3 +297,9 @@ Filter by phone number and you will see:
 - If Visual Crossing credentials are missing, the backend falls back to a mock weather payload.
 - The default SMS provider is mock mode, so outbound SMS is stored and visible without external credentials.
 - Inbound webhook authorization uses the default token `local-webhook-token` for local testing.
+
+
+https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/swahili?
+  unitGroup=us
+  &key=ZFB93E8D83QX7NJPK82AHGCL5
+  &contentType=json
