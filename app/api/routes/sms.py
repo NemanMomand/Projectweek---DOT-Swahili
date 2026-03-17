@@ -26,6 +26,31 @@ from app.services.sms_service import SMSService
 router = APIRouter(prefix="/api/v1/sms", tags=["sms"])
 
 
+def _looks_like_short_code(value: str | None) -> bool:
+    digits = "".join(ch for ch in (value or "") if ch.isdigit())
+    return 3 <= len(digits) <= 6
+
+
+def _looks_like_msisdn(value: str | None) -> bool:
+    digits = "".join(ch for ch in (value or "") if ch.isdigit())
+    return len(digits) >= 8
+
+
+def _resolve_inbound_sender(from_value: str | None, to_value: str | None) -> str:
+    from_clean = (from_value or "").strip()
+    to_clean = (to_value or "").strip()
+
+    # Some gateways can send shortcode in From and handset in To.
+    if _looks_like_short_code(from_clean) and _looks_like_msisdn(to_clean):
+        return to_clean
+
+    if from_clean:
+        return from_clean
+    if to_clean:
+        return to_clean
+    return ""
+
+
 def _map_twilio_status(status_value: str | None):
     normalized = (status_value or "").strip().lower()
     if normalized in {"queued", "accepted", "sending", "sent"}:
@@ -134,12 +159,16 @@ async def receive_twilio_inbound_sms(
         "NumMedia": NumMedia,
         "provider": "twilio",
     }
+    sender_phone = _resolve_inbound_sender(From, To)
+    if not sender_phone:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing sender phone number")
+
     await _store_inbound_message(
         session=session,
         provider_message_id=MessageSid or SmsSid or f"twilio-in-{uuid4().hex[:16]}",
-        phone_number=From,
+        phone_number=sender_phone,
         body=Body,
-        raw_payload=payload,
+        raw_payload={**payload, "resolved_phone_number": sender_phone},
     )
     return Response(content="<Response></Response>", media_type="application/xml")
 
