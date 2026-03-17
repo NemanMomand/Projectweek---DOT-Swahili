@@ -156,6 +156,26 @@ python -m app.scripts.seed
 uvicorn app.main:app --reload
 ```
 
+### Visual Crossing key setup
+
+If you use live weather data, set one of these environment variables:
+
+- `VISUAL_CROSSING_API_KEY` (recommended)
+- `WEATHER_API_KEY` (accepted alias)
+
+For strict live mode (no mock fallback), also set:
+
+- `WEATHER_PROVIDER=visual_crossing`
+- `WEATHER_MOCK_FALLBACK=false`
+
+PowerShell example:
+
+```powershell
+$env:VISUAL_CROSSING_API_KEY='YOUR_REAL_KEY'
+$env:WEATHER_PROVIDER='visual_crossing'
+$env:WEATHER_MOCK_FALLBACK='false'
+```
+
 ### Run tests
 
 ```bash

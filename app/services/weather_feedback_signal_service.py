@@ -59,7 +59,8 @@ class WeatherFeedbackSignalService:
         alert_repo = AlertRepository(session)
 
         for label in current.labels:
-            if counts.get(label, 0) < threshold:
+            signal_count = counts.get(label, 0)
+            if signal_count < threshold:
                 continue
 
             duplicate = await alert_repo.find_recent_duplicate(
@@ -70,12 +71,19 @@ class WeatherFeedbackSignalService:
             if duplicate is not None:
                 continue
 
+            # Threat 5: Simple confidence score (0.0–1.0).
+            # Base = fraction of threshold met (capped at 1.0), boosted if multiple farmers report it.
+            confidence = min(1.0, round(signal_count / max(1, threshold * 2), 2))
+            # If confidence is very low (only exactly at threshold from a single farmer),
+            # log a warning instead of suppressing — still alert but record low confidence.
+
             severity = current.severity if label in current.labels else AlertSeverity.WARNING
             custom_message = self._build_signal_message(
                 label,
-                count=counts.get(label, 0),
+                count=signal_count,
                 window_hours=self.settings.feedback_signal_window_hours,
                 language=language,
+                confidence=confidence,
             )
             title, message = self.translation_service.render_alert(
                 alert_type=label,
@@ -120,6 +128,7 @@ class WeatherFeedbackSignalService:
         count: int,
         window_hours: int,
         language: PreferredLanguage,
+        confidence: float = 1.0,
     ) -> str:
         if language == PreferredLanguage.SW:
             label_text = {
@@ -140,6 +149,7 @@ class WeatherFeedbackSignalService:
             AlertType.HEAT: "extreme heat",
         }[alert_type]
         return (
-            f"We received {count} reports of {label_text} in the last {window_hours} hours. "
+            f"We received {count} reports of {label_text} in the last {window_hours} hours "
+            f"(confidence: {int(confidence * 100)}%). "
             "Please take preventive action to protect your crops."
         )

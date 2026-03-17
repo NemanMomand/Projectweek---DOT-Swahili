@@ -40,10 +40,13 @@ app = FastAPI(
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # Threat 4: Never use allow_origins=["*"] with allow_credentials=True.
+    # For a prototype served from the same host, restrict to localhost origins.
+    # In production set CORS_ALLOW_ORIGINS env var to your actual domain.
+    allow_origins=["http://127.0.0.1:8000", "http://localhost:8000"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Content-Type", "Authorization", "X-Admin-Key", "X-Webhook-Token"],
 )
 app.include_router(api_router)
 
@@ -80,3 +83,8 @@ async def rain_live_page_redirect() -> RedirectResponse:
 @app.get("/forecast-delivery", include_in_schema=False)
 async def forecast_delivery_page_redirect() -> RedirectResponse:
     return RedirectResponse(url="/dashboard/forecast-delivery.html")
+
+
+@app.get("/feedback-groups", include_in_schema=False)
+async def feedback_groups_page_redirect() -> RedirectResponse:
+    return RedirectResponse(url="/dashboard/feedback-groups.html")

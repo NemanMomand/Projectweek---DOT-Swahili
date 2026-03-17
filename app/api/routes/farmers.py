@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_session
+from app.core.security import verify_admin_key
 from app.models.farmer import Farmer
 from app.repositories.farmer_repository import FarmerRepository
 from app.repositories.location_repository import LocationRepository
@@ -52,6 +53,7 @@ async def update_farmer(
     farmer_id: int,
     payload: FarmerUpdate,
     session: AsyncSession = Depends(get_session),
+    _admin: None = Depends(verify_admin_key),  # Threat 3: admin only
 ) -> Farmer:
     repository = FarmerRepository(session)
     farmer = await repository.get(farmer_id)
@@ -76,7 +78,11 @@ async def update_farmer(
 
 
 @router.delete("/{farmer_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
-async def delete_farmer(farmer_id: int, session: AsyncSession = Depends(get_session)) -> Response:
+async def delete_farmer(
+    farmer_id: int,
+    session: AsyncSession = Depends(get_session),
+    _admin: None = Depends(verify_admin_key),  # Threat 3: admin only
+) -> Response:
     repository = FarmerRepository(session)
     farmer = await repository.get(farmer_id)
     if farmer is None:

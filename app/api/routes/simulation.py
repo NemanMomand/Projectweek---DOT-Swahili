@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_session
+from app.core.security import verify_admin_key
 from app.repositories.sms_repository import SMSRepository
 from app.schemas.simulation import (
     SimulationEventCreate,
@@ -16,7 +17,11 @@ router = APIRouter(prefix="/api/v1/simulation", tags=["simulation"])
 
 
 @router.post("/events", response_model=SimulationEventRead, status_code=status.HTTP_201_CREATED)
-async def create_simulation_event(payload: SimulationEventCreate, session: AsyncSession = Depends(get_session)):
+async def create_simulation_event(
+    payload: SimulationEventCreate,
+    session: AsyncSession = Depends(get_session),
+    _admin: None = Depends(verify_admin_key),  # Threat 3: admin only
+):
     return await SimulationService().create_event(session, payload)
 
 
@@ -34,7 +39,11 @@ async def get_simulation_event(event_id: int, session: AsyncSession = Depends(ge
 
 
 @router.post("/events/{event_id}/trigger", response_model=SimulationTriggerResponse)
-async def trigger_simulation_event(event_id: int, session: AsyncSession = Depends(get_session)):
+async def trigger_simulation_event(
+    event_id: int,
+    session: AsyncSession = Depends(get_session),
+    _admin: None = Depends(verify_admin_key),  # Threat 3: admin only
+):
     service = SimulationService()
     event = await service.get_event(session, event_id)
     if event is None:
@@ -50,7 +59,10 @@ async def trigger_simulation_event(event_id: int, session: AsyncSession = Depend
 
 
 @router.post("/reset", response_model=SimulationResetResponse)
-async def reset_simulation(session: AsyncSession = Depends(get_session)):
+async def reset_simulation(
+    session: AsyncSession = Depends(get_session),
+    _admin: None = Depends(verify_admin_key),  # Threat 3: admin only
+):
     return SimulationResetResponse(**(await SimulationService().reset(session)))
 
 

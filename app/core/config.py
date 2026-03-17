@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,7 +14,9 @@ class Settings(BaseSettings):
 
     app_name: str = Field(default="Dot Swahili API", alias="APP_NAME")
     app_env: str = Field(default="development", alias="APP_ENV")
-    debug: bool = Field(default=True, alias="DEBUG")
+    # Threat 4: default False so stack traces are not exposed to API callers.
+    # Set DEBUG=true only in local development.
+    debug: bool = Field(default=False, alias="DEBUG")
     api_v1_prefix: str = Field(default="/api/v1", alias="API_V1_PREFIX")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     host: str = Field(default="0.0.0.0", alias="HOST")
@@ -30,7 +32,14 @@ class Settings(BaseSettings):
     )
 
     weather_provider: str = Field(default="visual_crossing", alias="WEATHER_PROVIDER")
-    visual_crossing_api_key: str | None = Field(default=None, alias="VISUAL_CROSSING_API_KEY")
+    visual_crossing_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "VISUAL_CROSSING_API_KEY",
+            "VISUALCROSSING_API_KEY",
+            "WEATHER_API_KEY",
+        ),
+    )
     visual_crossing_base_url: str = Field(
         default="https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline",
         alias="VISUAL_CROSSING_BASE_URL",
@@ -64,6 +73,22 @@ class Settings(BaseSettings):
     rate_limit_max_requests: int = Field(default=120, alias="RATE_LIMIT_MAX_REQUESTS")
     rate_limit_window_seconds: int = Field(default=60, alias="RATE_LIMIT_WINDOW_SECONDS")
     seed_sample_data: bool = Field(default=True, alias="SEED_SAMPLE_DATA")
+
+    # Threat 3: admin key for sensitive endpoints (simulation, delete, manual alerts)
+    # Set ADMIN_API_KEY env var to a strong random string in production.
+    admin_api_key: str = Field(default="change-me", alias="ADMIN_API_KEY")
+
+    @field_validator("visual_crossing_api_key", mode="before")
+    @classmethod
+    def normalize_visual_crossing_key(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        cleaned = str(value).strip().strip('"').strip("'")
+        if not cleaned:
+            return None
+        if cleaned.upper() in {"YOUR_API_KEY", "CHANGE_ME", "CHANGEME"}:
+            return None
+        return cleaned
 
 
 @lru_cache

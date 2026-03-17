@@ -4,6 +4,7 @@ const smsContainer = document.getElementById("sms-list");
 const repliesContainer = document.getElementById("replies-list");
 const statusMessage = document.getElementById("filter-message");
 const refreshButton = document.getElementById("refresh");
+const opsKpis = document.getElementById("ops-kpis");
 
 async function api(path, tolerateNotFound = false) {
   const response = await fetch(path);
@@ -98,6 +99,47 @@ function renderReplies(items) {
     .join("");
 }
 
+function renderKpis(alerts, sms, replies) {
+  if (!opsKpis) return;
+
+  const times = [];
+  for (const item of alerts) {
+    if (item.sent_at) times.push(new Date(item.sent_at));
+    if (item.scheduled_for) times.push(new Date(item.scheduled_for));
+  }
+  for (const item of sms) {
+    if (item.sent_at) times.push(new Date(item.sent_at));
+    if (item.created_at) times.push(new Date(item.created_at));
+  }
+  for (const item of replies) {
+    if (item.received_at) times.push(new Date(item.received_at));
+    if (item.created_at) times.push(new Date(item.created_at));
+  }
+
+  const lastActivity = times.length
+    ? new Date(Math.max(...times.map((t) => t.getTime()))).toLocaleString()
+    : "No activity";
+
+  opsKpis.innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Alerts</div>
+      <div class="kpi-value">${alerts.length}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Outbound SMS</div>
+      <div class="kpi-value">${sms.length}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Inbound Replies</div>
+      <div class="kpi-value">${replies.length}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Last Activity</div>
+      <div class="kpi-value">${lastActivity}</div>
+    </div>
+  `;
+}
+
 async function loadMessages(phoneNumber) {
   statusMessage.textContent = "Loading real message data...";
   const query = phoneNumber ? `?phone_number=${encodeURIComponent(phoneNumber)}&real_only=true` : "?real_only=true";
@@ -111,6 +153,7 @@ async function loadMessages(phoneNumber) {
     const alerts = alertsRaw.filter((item) => !isTestRecord(item));
     const sms = smsRaw.filter((item) => !isTestRecord(item));
     const replies = repliesRaw.filter((item) => !isTestRecord(item));
+    renderKpis(alerts, sms, replies);
     renderAlerts(alerts);
     renderSms(sms);
     renderReplies(replies);

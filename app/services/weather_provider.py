@@ -51,7 +51,12 @@ class VisualCrossingWeatherProvider:
 
     async def _get_payload(self, latitude: float, longitude: float) -> dict:
         if not self.settings.visual_crossing_api_key:
-            logger.warning("Visual Crossing API key missing; using mock weather payload")
+            logger.warning("Visual Crossing API key missing")
+            if not self.settings.weather_mock_fallback:
+                raise RuntimeError(
+                    "Visual Crossing API key ontbreekt. Zet VISUAL_CROSSING_API_KEY (of WEATHER_API_KEY)."
+                )
+            logger.warning("Using mock weather payload because WEATHER_MOCK_FALLBACK=true")
             return self._mock_payload(latitude, longitude)
         url = f"{self.settings.visual_crossing_base_url}/{latitude},{longitude}"
         params = {

@@ -58,3 +58,35 @@ async def verify_webhook_token(x_webhook_token: str | None = Header(default=None
     settings = get_settings()
     if x_webhook_token != settings.sms_webhook_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook token")
+
+
+# --- Per-phone-number rate limiter (Threat 2: SMS flooding) ---
+# Allows max 10 inbound messages per phone number per 10 minutes.
+_phone_limiter = RateLimiter(max_requests=10, window_seconds=600)
+
+SMS_BLOCKED_NUMBERS: set[str] = set()
+
+
+def check_phone_rate_limit(phone: str) -> None:
+    """Raise 429 if phone has exceeded inbound SMS rate limit, or 403 if blocked."""
+    if phone in SMS_BLOCKED_NUMBERS:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Number is blocked")
+    allowed, retry_after = _phone_limiter.is_allowed(phone)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Rate limit exceeded for this number. Retry after {retry_after}s",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+
+# --- Simple admin API key (Threat 3: admin account compromise) ---
+def verify_admin_key(x_admin_key: str | None = Header(default=None)) -> None:
+    """Protect sensitive endpoints (simulation, farmer delete, manual alert trigger)."""
+    settings = get_settings()
+    expected = getattr(settings, "admin_api_key", None)
+    if not expected or expected == "change-me":
+        # If not configured, block completely to prevent accidental exposure
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Admin key not configured")
+    if x_admin_key != expected:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid admin key")

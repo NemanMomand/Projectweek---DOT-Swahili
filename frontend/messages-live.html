@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dot Swahili - Real Messages</title>
-    <link rel="stylesheet" href="/dashboard/style.css?v=20260317b" />
+    <link rel="stylesheet" href="/dashboard/style.css?v=20260317e" />
   </head>
   <body data-page="messages-live">
     <div class="shell">
@@ -19,12 +19,38 @@
         <div class="hero-actions">
           <a class="primary" href="/dashboard/rain-live.html">Open Live Rain Dashboard</a>
           <a class="ghost" href="/forecast-delivery">Forecast Delivery Settings</a>
+          <a class="ghost" href="/feedback-groups">AI Feedback Groups</a>
           <a class="ghost" href="/messages">Open Default Messages Page</a>
           <button id="refresh" class="ghost">Refresh</button>
         </div>
       </header>
 
       <main class="grid">
+        <section class="card span-2">
+          <div class="section-head">
+            <h2>Operational Scorecard</h2>
+            <span class="pill">Decision View</span>
+          </div>
+          <div id="ops-kpis" class="kpi-strip">
+            <div class="kpi-card">
+              <div class="kpi-label">Alerts</div>
+              <div class="kpi-value">-</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Outbound SMS</div>
+              <div class="kpi-value">-</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Inbound Replies</div>
+              <div class="kpi-value">-</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Last Activity</div>
+              <div class="kpi-value">-</div>
+            </div>
+          </div>
+        </section>
+
         <section class="card span-2">
           <div class="section-head">
             <h2>Filter By Phone Number</h2>
@@ -63,7 +89,9 @@
       </main>
     </div>
 
-    <script src="/dashboard/nav.js?v=20260317b"></script>
+    <script src="/dashboard/nav.js?v=20260317e"></script>
     <script src="/dashboard/messages-live.js"></script>
   </body>
 </html>
+
+

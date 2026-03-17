@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_session
-from app.core.security import verify_webhook_token
+from app.core.config import get_settings
+from app.core.security import check_phone_rate_limit, verify_webhook_token
 from app.models.farmer_feedback import FarmerFeedback
 from app.models.enums import SMSStatus
 from app.repositories.farmer_repository import FarmerRepository
@@ -70,7 +71,17 @@ async def _store_inbound_message(
     phone_number: str,
     body: str,
     raw_payload: dict,
+    *,
+    require_registered: bool = False,
 ):
+    # Threat 1: optionally reject messages from unregistered numbers
+    farmer = await FarmerRepository(session).get_by_phone(phone_number)
+    if require_registered and (farmer is None or not farmer.is_active):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Phone number not registered as an active farmer",
+        )
+
     sms_service = SMSService()
     parser = FeedbackParser()
     message, duplicate = await sms_service.record_inbound(
@@ -81,7 +92,6 @@ async def _store_inbound_message(
         raw_payload=raw_payload,
         received_at=None,
     )
-    farmer = await FarmerRepository(session).get_by_phone(phone_number)
     if not duplicate:
         parsed = parser.parse(body)
         feedback = FarmerFeedback(
@@ -138,8 +148,28 @@ async def receive_sms_status(
     return message
 
 
+def _verify_twilio_signature(request: Request, settings) -> bool:
+    """Threat 2: Validate that the request genuinely came from Twilio.
+    Requires TWILIO_AUTH_TOKEN to be set. Skipped in development if token not configured."""
+    try:
+        from twilio.request_validator import RequestValidator  # type: ignore
+    except ImportError:
+        return True  # twilio library not installed — skip in development
+
+    auth_token = settings.twilio_auth_token
+    if not auth_token:
+        return True  # not configured — skip (development mode)
+
+    signature = request.headers.get("X-Twilio-Signature", "")
+    # Build the full URL as Twilio would see it
+    url = str(request.url)
+    validator = RequestValidator(auth_token)
+    return validator.validate(url, {}, signature)
+
+
 @router.post("/twilio/inbound")
 async def receive_twilio_inbound_sms(
+    request: Request,
     session: AsyncSession = Depends(get_session),
     MessageSid: str | None = Form(default=None),
     SmsSid: str | None = Form(default=None),
@@ -149,6 +179,12 @@ async def receive_twilio_inbound_sms(
     AccountSid: str | None = Form(default=None),
     NumMedia: str | None = Form(default=None),
 ):
+    settings = get_settings()
+
+    # Threat 2: Verify the request signature (proves it came from Twilio, not a spoofer)
+    if not _verify_twilio_signature(request, settings):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Twilio signature")
+
     payload = {
         "MessageSid": MessageSid,
         "SmsSid": SmsSid,
@@ -163,12 +199,16 @@ async def receive_twilio_inbound_sms(
     if not sender_phone:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing sender phone number")
 
+    # Threat 2: Rate limit per phone number (max 10 messages per 10 minutes)
+    check_phone_rate_limit(sender_phone)
+
     await _store_inbound_message(
         session=session,
         provider_message_id=MessageSid or SmsSid or f"twilio-in-{uuid4().hex[:16]}",
         phone_number=sender_phone,
         body=Body,
         raw_payload={**payload, "resolved_phone_number": sender_phone},
+        require_registered=False,  # Set True to enforce Threat 1 on live Twilio endpoint
     )
     return Response(content="<Response></Response>", media_type="application/xml")
 
