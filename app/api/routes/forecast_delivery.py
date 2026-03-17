@@ -27,6 +27,7 @@ class ForecastDeliveryDispatchResponse(BaseModel):
     sent: int
     skipped: int
     last_sent_date_utc: str | None = None
+    error: str | None = None
 
 
 @router.get("/settings", response_model=ForecastDeliverySettingsResponse)

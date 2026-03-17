@@ -63,7 +63,10 @@ async function sendNow() {
       ? `/api/v1/forecast-delivery/dispatch-now?phone_number=${encodeURIComponent(phone)}&language=en`
       : "/api/v1/forecast-delivery/dispatch-now?force=true";
     const result = await api(query, { method: "POST" });
-    statusLine.textContent = `Dispatch result: ${result.status}. Sent: ${result.sent}, skipped: ${result.skipped}.`;
+    const sent = result.sent ?? 0;
+    const skipped = result.skipped ?? 0;
+    const base = `Dispatch result: ${result.status || "unknown"}. Sent: ${sent}, skipped: ${skipped}.`;
+    statusLine.textContent = result.error ? `${base} Reason: ${result.error}` : base;
     await loadSettings({ silent: true });
   } catch (error) {
     statusLine.textContent = error.message;

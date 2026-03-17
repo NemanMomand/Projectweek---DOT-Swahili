@@ -69,10 +69,22 @@ class DailyForecastDeliveryService:
         today = datetime.now(UTC).date().isoformat()
 
         if not settings.enabled and not force:
-            return {"status": "disabled", "sent": 0, "skipped": 0, "last_sent_date_utc": settings.last_sent_date_utc}
+            return {
+                "status": "disabled",
+                "sent": 0,
+                "skipped": 0,
+                "last_sent_date_utc": settings.last_sent_date_utc,
+                "error": None,
+            }
 
         if settings.last_sent_date_utc == today and not force:
-            return {"status": "already_sent_today", "sent": 0, "skipped": 0, "last_sent_date_utc": settings.last_sent_date_utc}
+            return {
+                "status": "already_sent_today",
+                "sent": 0,
+                "skipped": 0,
+                "last_sent_date_utc": settings.last_sent_date_utc,
+                "error": None,
+            }
 
         farmers = await FarmerRepository(session).list_active()
         sent = 0
@@ -114,6 +126,7 @@ class DailyForecastDeliveryService:
             "sent": sent,
             "skipped": skipped,
             "last_sent_date_utc": settings.last_sent_date_utc,
+            "error": None,
         }
 
     async def send_tomorrow_forecast_to_phone(
@@ -122,16 +135,20 @@ class DailyForecastDeliveryService:
         phone_number: str,
         language: PreferredLanguage = PreferredLanguage.EN,
     ) -> dict:
-        farmers = await FarmerRepository(session).list_active()
-        if not farmers:
+        source_farmer = await FarmerRepository(session).get_by_phone(phone_number)
+        if source_farmer is None:
+            farmers = await FarmerRepository(session).list_active()
+            source_farmer = farmers[0] if farmers else None
+
+        if source_farmer is None:
             return {
                 "status": "no_active_farmers_for_forecast",
                 "sent": 0,
                 "skipped": 1,
                 "last_sent_date_utc": self._read_settings().last_sent_date_utc,
+                "error": "No active farmer found to source weather data.",
             }
 
-        source_farmer = farmers[0]
         try:
             forecast = await self.weather_service.forecast(source_farmer.latitude, source_farmer.longitude)
             if forecast.source != WeatherSource.VISUAL_CROSSING:
@@ -140,6 +157,7 @@ class DailyForecastDeliveryService:
                     "sent": 0,
                     "skipped": 1,
                     "last_sent_date_utc": self._read_settings().last_sent_date_utc,
+                    "error": "Live forecast provider unavailable (non-real source).",
                 }
             days = (forecast.raw_payload or {}).get("days") or []
             if not days:
@@ -148,6 +166,7 @@ class DailyForecastDeliveryService:
                     "sent": 0,
                     "skipped": 1,
                     "last_sent_date_utc": self._read_settings().last_sent_date_utc,
+                    "error": "Forecast payload had no daily timeline.",
                 }
             tomorrow = days[1] if len(days) > 1 else days[0]
             message = self._build_message(
@@ -157,19 +176,23 @@ class DailyForecastDeliveryService:
                 cloud_cover=tomorrow.get("cloudcover"),
                 forecast_date=str(tomorrow.get("datetime") or "tomorrow"),
             )
-            await self.sms_service.send_message(session=session, phone_number=phone_number, body=message)
+            sms = await self.sms_service.send_message(session=session, phone_number=phone_number, body=message)
+            sent = 1 if sms.status.value != "failed" else 0
+            skipped = 0 if sent else 1
             return {
-                "status": "forced_sent_to_phone",
-                "sent": 1,
-                "skipped": 0,
+                "status": "forced_sent_to_phone" if sent else "forced_send_to_phone_failed",
+                "sent": sent,
+                "skipped": skipped,
                 "last_sent_date_utc": self._read_settings().last_sent_date_utc,
+                "error": None if sent else "SMS provider returned failed status.",
             }
-        except Exception:
+        except Exception as exc:
             return {
                 "status": "forced_send_to_phone_failed",
                 "sent": 0,
                 "skipped": 1,
                 "last_sent_date_utc": self._read_settings().last_sent_date_utc,
+                "error": str(exc),
             }
 
     def _build_message(
