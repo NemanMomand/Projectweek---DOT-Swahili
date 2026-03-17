@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dot Swahili - Real Messages</title>
+    <link rel="stylesheet" href="/dashboard/style.css?v=20260317b" />
+  </head>
+  <body data-page="messages-live">
+    <div class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Dot Swahili Live</p>
+          <h1>Real Message Traffic</h1>
+          <p class="subtitle">
+            This view only shows real production records from Twilio and real weather-triggered alerts.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <a class="primary" href="/dashboard/rain-live.html">Open Live Rain Dashboard</a>
+          <a class="ghost" href="/forecast-delivery">Forecast Delivery Settings</a>
+          <a class="ghost" href="/messages">Open Default Messages Page</a>
+          <button id="refresh" class="ghost">Refresh</button>
+        </div>
+      </header>
+
+      <main class="grid">
+        <section class="card span-2">
+          <div class="section-head">
+            <h2>Filter By Phone Number</h2>
+            <span class="pill">Real-only</span>
+          </div>
+          <form id="filter-form" class="form-grid">
+            <input name="phone_number" placeholder="Example: +32470770258" />
+            <button class="primary" type="submit">Show Live Messages</button>
+          </form>
+          <div id="filter-message" class="status-line"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <h2>Live Alerts</h2>
+            <span class="pill accent">Alerts</span>
+          </div>
+          <div id="alerts-list" class="data-list"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <h2>Sent SMS</h2>
+            <span class="pill">Outbound</span>
+          </div>
+          <div id="sms-list" class="data-list"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <h2>Incoming Replies</h2>
+            <span class="pill accent">Inbound</span>
+          </div>
+          <div id="replies-list" class="data-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/dashboard/nav.js?v=20260317b"></script>
+    <script src="/dashboard/messages-live.js"></script>
+  </body>
+</html>
