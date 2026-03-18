@@ -75,16 +75,23 @@ async function ensureFarmerForPhone(phone, signal) {
 }
 
 async function sendInbound(phone, body, sid) {
-  const form = new URLSearchParams();
-  form.append("From", phone);
-  form.append("To", "+14092285773");
-  form.append("Body", body);
-  form.append("MessageSid", sid);
+  const payload = {
+    phone_number: phone,
+    body,
+    provider_message_id: sid,
+    raw_payload: {
+      source: "feedback-groups-demo",
+      provider: "ui",
+    },
+  };
 
-  const res = await fetch("/api/v1/sms/twilio/inbound", {
+  const res = await fetch("/api/v1/sms/reply", {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: form.toString(),
+    headers: {
+      "Content-Type": "application/json",
+      "x-webhook-token": "local-webhook-token",
+    },
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {

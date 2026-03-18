@@ -10,6 +10,7 @@ from app.api.routes.locations import router as locations_router
 from app.api.routes.messages import router as messages_router
 from app.api.routes.simulation import router as simulation_router
 from app.api.routes.sms import router as sms_router
+from app.api.routes.voice import router as voice_router
 from app.api.routes.weather import router as weather_router
 
 api_router = APIRouter()
@@ -21,6 +22,7 @@ api_router.include_router(weather_router)
 api_router.include_router(forecast_delivery_router)
 api_router.include_router(alerts_router)
 api_router.include_router(sms_router)
+api_router.include_router(voice_router)
 api_router.include_router(feedback_router)
 api_router.include_router(simulation_router)
 api_router.include_router(health_router)
