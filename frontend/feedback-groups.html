@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dot Swahili - AI Feedback Groups</title>
-    <link rel="stylesheet" href="/dashboard/style.css?v=20260317e" />
+    <link rel="stylesheet" href="/dashboard/style.css?v=20260318b" />
     <style>
       .group-header {
         display: flex;
@@ -15,7 +15,7 @@
       .group-count {
         font-size: 1.8rem;
         font-weight: 700;
-        color: var(--accent, #2563eb);
+        color: var(--brand-2, #2563eb);
       }
       .type-badge {
         font-size: 0.75rem;
@@ -24,15 +24,15 @@
         text-transform: uppercase;
         padding: 0.25rem 0.6rem;
         border-radius: 999px;
-        background: #dbeafe;
-        color: #1d4ed8;
+        background: rgba(79, 157, 247, 0.18);
+        color: var(--brand-2, #1d4ed8);
       }
-      .type-badge.rain_seen { background: #bfdbfe; color: #1e40af; }
-      .type-badge.flood      { background: #fce7f3; color: #9d174d; }
-      .type-badge.storm      { background: #e0e7ff; color: #4338ca; }
-      .type-badge.dry_soil   { background: #fef3c7; color: #92400e; }
-      .type-badge.pest       { background: #d1fae5; color: #065f46; }
-      .type-badge.unknown    { background: #f3f4f6; color: #374151; }
+      .type-badge.rain_seen { background: rgba(79, 157, 247, 0.2); color: #8cc8ff; }
+      .type-badge.flood      { background: rgba(236, 72, 153, 0.2); color: #ffb7da; }
+      .type-badge.storm      { background: rgba(129, 140, 248, 0.2); color: #c7ccff; }
+      .type-badge.dry_soil   { background: rgba(245, 158, 11, 0.2); color: #ffd590; }
+      .type-badge.pest       { background: rgba(16, 185, 129, 0.2); color: #9ff2d0; }
+      .type-badge.unknown    { background: rgba(148, 163, 184, 0.2); color: #dbe7f5; }
       .summary-grid {
         display: flex;
         flex-wrap: wrap;
@@ -41,8 +41,8 @@
       }
       .summary-tile {
         flex: 1 1 140px;
-        background: rgba(255, 255, 255, 0.76);
-        border: 1px solid rgba(18, 42, 36, 0.12);
+        background: var(--surface-strong, rgba(255, 255, 255, 0.9));
+        border: 1px solid var(--border, rgba(18, 42, 36, 0.12));
         border-radius: 0.95rem;
         padding: 1rem;
         text-align: center;
@@ -64,7 +64,7 @@
         padding-left: 0.75rem;
         margin-top: 0.5rem;
         font-size: 0.82rem;
-        color: #92400e;
+        color: #ffcf97;
       }
       .no-alerts-note {
         font-size: 0.8rem;
@@ -88,9 +88,9 @@
         grid-row: 1;
       }
       .quick-trigger-note {
-        background: rgba(15, 118, 110, 0.08);
-        border: 1px solid rgba(15, 118, 110, 0.2);
-        color: #0f766e;
+        background: rgba(35, 199, 180, 0.14);
+        border: 1px solid rgba(35, 199, 180, 0.24);
+        color: var(--ink);
         border-radius: 12px;
         padding: 0.65rem 0.75rem;
         font-size: 0.84rem;
@@ -103,6 +103,12 @@
         display: flex;
         gap: 0.5rem;
         margin-top: 0.5rem;
+      }
+      body[data-theme="dark"] .summary-tile {
+        background: rgba(18, 35, 52, 0.94);
+      }
+      body[data-theme="dark"] .quick-trigger-note {
+        background: rgba(35, 199, 180, 0.2);
       }
       @media (max-width: 960px) {
         .quick-trigger-card {
@@ -191,7 +197,7 @@
       </main>
     </div>
 
-    <script src="/dashboard/nav.js?v=20260317e"></script>
+    <script src="/dashboard/nav.js?v=20260318b"></script>
     <script src="/dashboard/feedback-groups.js"></script>
   </body>
 </html>
