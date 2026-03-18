@@ -10,6 +10,7 @@ from app.schemas.simulation import (
     SimulationTriggerResponse,
 )
 from app.schemas.sms import InboundSMSWebhook, SendSMSRequest, SendSMSResponse, SMSMessageRead, SMSStatusWebhook
+from app.schemas.voice import VoiceCallRequest, VoiceCallResponse, VoiceCallThenSMSRequest, VoiceCallThenSMSResponse
 from app.schemas.weather import ForecastResponse, WeatherObservationRead
 
 __all__ = [
@@ -33,6 +34,10 @@ __all__ = [
     "SendSMSResponse",
     "SMSMessageRead",
     "SMSStatusWebhook",
+    "VoiceCallRequest",
+    "VoiceCallResponse",
+    "VoiceCallThenSMSRequest",
+    "VoiceCallThenSMSResponse",
     "ForecastResponse",
     "WeatherObservationRead",
 ]

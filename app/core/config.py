@@ -80,6 +80,16 @@ class Settings(BaseSettings):
         default=None,
         alias="TWILIO_MESSAGING_SERVICE_SID",
     )
+    voice_enabled: bool = Field(default=True, alias="VOICE_ENABLED")
+    twilio_voice_from_number: str | None = Field(default=None, alias="TWILIO_VOICE_FROM_NUMBER")
+    twilio_voice_twiml_url: str = Field(
+        default="https://dot-swahili-775881330691.europe-west1.run.app/api/v1/voice/twiml",
+        alias="TWILIO_VOICE_TWIML_URL",
+    )
+    twilio_voice_status_callback_url: str = Field(
+        default="https://dot-swahili-775881330691.europe-west1.run.app/api/v1/voice/status",
+        alias="TWILIO_VOICE_STATUS_CALLBACK_URL",
+    )
     sms_webhook_token: str = Field(default="local-webhook-token", alias="SMS_WEBHOOK_TOKEN")
 
     scheduler_enabled: bool = Field(default=True, alias="SCHEDULER_ENABLED")

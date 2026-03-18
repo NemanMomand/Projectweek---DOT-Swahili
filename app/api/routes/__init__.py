@@ -7,6 +7,7 @@ from app.api.routes.locations import router as locations_router
 from app.api.routes.messages import router as messages_router
 from app.api.routes.simulation import router as simulation_router
 from app.api.routes.sms import router as sms_router
+from app.api.routes.voice import router as voice_router
 from app.api.routes.weather import router as weather_router
 
 __all__ = [
@@ -19,5 +20,6 @@ __all__ = [
     "messages_router",
     "simulation_router",
     "sms_router",
+    "voice_router",
     "weather_router",
 ]
