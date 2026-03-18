@@ -6,6 +6,7 @@
   --bg-3: #c7dce8;
   --surface: rgba(255, 252, 247, 0.76);
   --surface-strong: rgba(255, 255, 255, 0.9);
+  --surface-muted: rgba(255, 255, 255, 0.74);
   --ink: #122a24;
   --muted: #4f675f;
   --brand: #0f766e;
@@ -22,17 +23,18 @@
 }
 
 body[data-theme="dark"] {
-  --bg-1: #0c1820;
-  --bg-2: #0f2a2a;
-  --bg-3: #1a2434;
-  --surface: rgba(21, 33, 43, 0.82);
-  --surface-strong: rgba(25, 39, 51, 0.94);
-  --ink: #e8f2ef;
-  --muted: #9eb8b1;
-  --brand: #2dd4bf;
-  --brand-2: #60a5fa;
-  --border: rgba(190, 230, 220, 0.18);
-  --ring: rgba(96, 165, 250, 0.28);
+  --bg-1: #081421;
+  --bg-2: #0a2532;
+  --bg-3: #132f4e;
+  --surface: rgba(10, 23, 35, 0.88);
+  --surface-strong: rgba(17, 33, 48, 0.96);
+  --surface-muted: rgba(20, 38, 57, 0.92);
+  --ink: #eaf6f1;
+  --muted: #b2c7c2;
+  --brand: #23c7b4;
+  --brand-2: #4f9df7;
+  --border: rgba(157, 212, 203, 0.26);
+  --ring: rgba(79, 157, 247, 0.34);
   --shadow-xl: 0 26px 70px rgba(2, 10, 16, 0.5);
   --shadow-md: 0 12px 24px rgba(2, 10, 16, 0.35);
 }
@@ -124,6 +126,12 @@ nav.topnav {
   z-index: 20;
 }
 
+body[data-theme="dark"] .topnav,
+body[data-theme="dark"] nav.topnav {
+  background: linear-gradient(125deg, rgba(17, 35, 50, 0.97), rgba(13, 29, 44, 0.96));
+  border-color: rgba(160, 220, 211, 0.24);
+}
+
 .topnav a,
 .topnav a:visited {
   text-decoration: none;
@@ -141,6 +149,11 @@ nav.topnav {
   letter-spacing: 0.03em;
   background: linear-gradient(120deg, rgba(15, 118, 110, 0.15), rgba(29, 78, 216, 0.14));
   border: 1px solid rgba(15, 118, 110, 0.16);
+}
+
+body[data-theme="dark"] .brand {
+  background: linear-gradient(120deg, rgba(35, 199, 180, 0.2), rgba(79, 157, 247, 0.2));
+  border-color: rgba(35, 199, 180, 0.32);
 }
 
 .topnav-links,
@@ -168,6 +181,10 @@ nav.topnav {
   color: var(--ink);
 }
 
+body[data-theme="dark"] .theme-toggle {
+  background: rgba(20, 38, 57, 0.96);
+}
+
 .nav-link,
 .topnav .topnav-links a {
   display: inline-flex;
@@ -182,11 +199,23 @@ nav.topnav {
   transition: 170ms ease;
 }
 
+body[data-theme="dark"] .nav-link,
+body[data-theme="dark"] .topnav .topnav-links a {
+  border-color: rgba(157, 212, 203, 0.24);
+  background: rgba(20, 38, 57, 0.94);
+}
+
 .nav-link:hover,
 .topnav .topnav-links a:hover {
   transform: translateY(-1px);
   background: rgba(244, 252, 247, 0.96);
   border-color: rgba(15, 118, 110, 0.32);
+}
+
+body[data-theme="dark"] .nav-link:hover,
+body[data-theme="dark"] .topnav .topnav-links a:hover {
+  background: rgba(31, 56, 81, 0.98);
+  border-color: rgba(35, 199, 180, 0.45);
 }
 
 .nav-link.active {
@@ -268,6 +297,10 @@ h1 {
   padding: 12px;
 }
 
+body[data-theme="dark"] .kpi-card {
+  background: linear-gradient(135deg, rgba(19, 38, 58, 0.98), rgba(16, 33, 50, 0.96));
+}
+
 .kpi-label {
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -293,6 +326,10 @@ h1 {
   overflow: hidden;
 }
 
+body[data-theme="dark"] .card {
+  background: linear-gradient(140deg, rgba(10, 23, 35, 0.94), rgba(12, 27, 42, 0.92));
+}
+
 .card::before {
   content: "";
   position: absolute;
@@ -301,6 +338,10 @@ h1 {
   border-radius: 100%;
   background: linear-gradient(120deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
   pointer-events: none;
+}
+
+body[data-theme="dark"] .card::before {
+  background: linear-gradient(120deg, rgba(79, 157, 247, 0.18), rgba(35, 199, 180, 0.02));
 }
 
 .span-2 {
@@ -331,10 +372,22 @@ h1 {
   border: 1px solid rgba(15, 118, 110, 0.16);
 }
 
+body[data-theme="dark"] .pill {
+  color: #8de7d9;
+  background: rgba(35, 199, 180, 0.18);
+  border-color: rgba(35, 199, 180, 0.34);
+}
+
 .pill.accent {
   color: #b45309;
   background: rgba(180, 83, 9, 0.14);
   border: 1px solid rgba(180, 83, 9, 0.18);
+}
+
+body[data-theme="dark"] .pill.accent {
+  color: #ffbf86;
+  background: rgba(180, 83, 9, 0.22);
+  border-color: rgba(234, 129, 32, 0.36);
 }
 
 .form-grid {
@@ -360,6 +413,13 @@ button {
   padding: 12px 14px;
   font: inherit;
   transition: 150ms ease;
+}
+
+body[data-theme="dark"] input,
+body[data-theme="dark"] select,
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] button {
+  background: var(--surface-strong);
 }
 
 input:focus,
@@ -402,7 +462,7 @@ button.ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.74);
+  background: var(--surface-muted);
   color: var(--ink);
 }
 
@@ -481,6 +541,12 @@ button.ghost {
   transition: 160ms ease;
 }
 
+body[data-theme="dark"] .event-card,
+body[data-theme="dark"] .data-card {
+  background: rgba(22, 41, 60, 0.95);
+  border-color: rgba(157, 212, 203, 0.18);
+}
+
 .card,
 .data-card,
 .metric-card,
@@ -518,6 +584,11 @@ button.ghost {
   background: rgba(255, 255, 255, 0.9);
 }
 
+body[data-theme="dark"] .event-card:hover,
+body[data-theme="dark"] .data-card:hover {
+  background: rgba(28, 52, 76, 0.98);
+}
+
 .event-top,
 .data-top {
   display: flex;
@@ -545,6 +616,14 @@ button.ghost {
 .badge.cancelled { background: rgba(75, 85, 99, 0.13); color: #374151; }
 .badge.completed { background: rgba(15, 118, 110, 0.13); color: #0f766e; }
 
+body[data-theme="dark"] .badge.pending { background: rgba(79, 157, 247, 0.22); color: #b9d8ff; }
+body[data-theme="dark"] .badge.detected { background: rgba(255, 167, 77, 0.24); color: #ffd4a5; }
+body[data-theme="dark"] .badge.alert_created { background: rgba(255, 126, 82, 0.24); color: #ffc0a5; }
+body[data-theme="dark"] .badge.sms_sent { background: rgba(35, 199, 180, 0.24); color: #b7fff4; }
+body[data-theme="dark"] .badge.skipped_duplicate { background: rgba(174, 122, 255, 0.24); color: #dfc6ff; }
+body[data-theme="dark"] .badge.cancelled { background: rgba(148, 163, 184, 0.24); color: #dbe7f5; }
+body[data-theme="dark"] .badge.completed { background: rgba(35, 199, 180, 0.24); color: #b7fff4; }
+
 .sms-log .data-card {
   border-left: 4px solid var(--brand);
 }
@@ -560,6 +639,11 @@ button.ghost {
   border: 1px solid rgba(18, 42, 36, 0.12);
   border-radius: 16px;
   padding: 14px;
+}
+
+body[data-theme="dark"] .metric-card {
+  background: linear-gradient(135deg, rgba(20, 38, 57, 0.97), rgba(15, 30, 46, 0.96));
+  border-color: rgba(157, 212, 203, 0.22);
 }
 
 .metric-label {
@@ -584,6 +668,13 @@ button.ghost {
 .chart-wrap {
   position: relative;
   height: 320px;
+}
+
+body[data-theme="dark"] .chart-wrap {
+  background: rgba(10, 22, 34, 0.65);
+  border: 1px solid rgba(157, 212, 203, 0.12);
+  border-radius: 14px;
+  padding: 8px;
 }
 
 @media (max-width: 1100px) {

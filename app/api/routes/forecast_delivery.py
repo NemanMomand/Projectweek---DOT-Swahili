@@ -6,11 +6,23 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_session
+from app.core.config import get_settings
 from app.models.enums import PreferredLanguage
 from app.services.daily_forecast_delivery_service import DailyForecastDeliveryService
 
 router = APIRouter(prefix="/api/v1/forecast-delivery", tags=["forecast-delivery"])
 service = DailyForecastDeliveryService()
+
+
+def _default_phone_from_allowlist() -> str | None:
+    raw = (get_settings().sms_allowed_numbers or "").strip()
+    if not raw:
+        return None
+    for item in raw.split(","):
+        phone = item.strip()
+        if phone:
+            return phone
+    return None
 
 
 class ForecastDeliverySettingsResponse(BaseModel):
@@ -56,10 +68,11 @@ async def dispatch_forecast_delivery_now(
     language: PreferredLanguage = Query(default=PreferredLanguage.EN),
     bilingual: bool = Query(default=False),
 ) -> ForecastDeliveryDispatchResponse:
-    if phone_number:
+    target_phone = phone_number or _default_phone_from_allowlist()
+    if target_phone:
         result = await service.send_tomorrow_forecast_to_phone(
             session=session,
-            phone_number=phone_number,
+            phone_number=target_phone,
             language=language,
             bilingual=bilingual,
         )

@@ -110,6 +110,12 @@ function renderWeeklyChart(points) {
   const labels = points.map((point) => point.date);
   const temperature = points.map((point) => Number(point.temp_c || 0));
   const rainfall = points.map((point) => Number(point.precip_mm || 0));
+  const styles = getComputedStyle(document.body);
+  const textColor = styles.getPropertyValue("--ink").trim() || "#122a24";
+  const mutedColor = styles.getPropertyValue("--muted").trim() || "#4f675f";
+  const gridColor = document.body.getAttribute("data-theme") === "dark"
+    ? "rgba(178, 199, 194, 0.22)"
+    : "rgba(79, 103, 95, 0.15)";
 
   weeklyChart = new Chart(weeklyChartCanvas, {
     type: "bar",
@@ -121,8 +127,8 @@ function renderWeeklyChart(points) {
           label: "Temperature (C)",
           data: temperature,
           yAxisID: "yTemp",
-          borderColor: "#d45b35",
-          backgroundColor: "rgba(212,91,53,0.15)",
+          borderColor: "#f58d53",
+          backgroundColor: "rgba(245,141,83,0.2)",
           tension: 0.28,
           borderWidth: 3,
           pointRadius: 3,
@@ -131,8 +137,8 @@ function renderWeeklyChart(points) {
           label: "Rainfall (mm)",
           data: rainfall,
           yAxisID: "yRain",
-          backgroundColor: "rgba(29,123,99,0.72)",
-          borderColor: "rgba(24,50,38,0.9)",
+          backgroundColor: "rgba(35,199,180,0.75)",
+          borderColor: "rgba(35,199,180,1)",
           borderWidth: 1,
           borderRadius: 8,
         },
@@ -144,18 +150,35 @@ function renderWeeklyChart(points) {
       plugins: {
         legend: {
           display: true,
+          labels: {
+            color: textColor,
+          },
+        },
+        tooltip: {
+          backgroundColor: document.body.getAttribute("data-theme") === "dark" ? "rgba(12, 23, 35, 0.95)" : "rgba(255,255,255,0.97)",
+          titleColor: textColor,
+          bodyColor: textColor,
+          borderColor: gridColor,
+          borderWidth: 1,
         },
       },
       scales: {
         yRain: {
           position: "left",
           beginAtZero: true,
+          ticks: { color: mutedColor },
+          grid: { color: gridColor },
           title: { display: true, text: "Rainfall (mm)" },
         },
         yTemp: {
           position: "right",
-          grid: { drawOnChartArea: false },
+          ticks: { color: mutedColor },
+          grid: { drawOnChartArea: false, color: gridColor },
           title: { display: true, text: "Temperature (C)" },
+        },
+        x: {
+          ticks: { color: mutedColor },
+          grid: { color: gridColor },
         },
       },
     },
