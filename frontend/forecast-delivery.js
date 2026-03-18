@@ -59,9 +59,13 @@ async function sendNow() {
   statusLine.textContent = "Sending now...";
   try {
     const phone = testPhoneInput.value.trim();
-    const query = phone
-      ? `/api/v1/forecast-delivery/dispatch-now?phone_number=${encodeURIComponent(phone)}&language=en`
-      : "/api/v1/forecast-delivery/dispatch-now?force=true";
+    if (!phone) {
+      statusLine.textContent = "Fill in one GSM number first. This button sends exactly one bilingual SMS (EN + Swahili).";
+      return;
+    }
+    const query = `/api/v1/forecast-delivery/dispatch-now?force=true&phone_number=${encodeURIComponent(
+      phone
+    )}&language=en&bilingual=true`;
     const result = await api(query, { method: "POST" });
     const sent = result.sent ?? 0;
     const skipped = result.skipped ?? 0;

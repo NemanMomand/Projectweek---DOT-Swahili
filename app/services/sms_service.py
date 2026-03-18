@@ -19,6 +19,27 @@ from app.repositories.sms_repository import SMSRepository
 logger = get_logger(__name__)
 
 
+def _normalize_phone(value: str) -> str:
+    value = (value or "").strip()
+    if value.startswith("+"):
+        return "+" + "".join(ch for ch in value if ch.isdigit())
+    return "".join(ch for ch in value if ch.isdigit())
+
+
+def _is_outbound_allowed(phone_number: str) -> bool:
+    settings = get_settings()
+    raw_allowlist = (settings.sms_allowed_numbers or "").strip()
+    if not raw_allowlist:
+        return True
+    requested = _normalize_phone(phone_number)
+    allowed = {
+        _normalize_phone(item)
+        for item in raw_allowlist.split(",")
+        if item and item.strip()
+    }
+    return requested in allowed
+
+
 @dataclass
 class SMSProviderResult:
     provider_message_id: str
@@ -81,6 +102,9 @@ class SMSService:
     ) -> SMSMessage:
         repository = SMSRepository(session)
         try:
+            settings = get_settings()
+            if settings.sms_provider == "twilio" and not _is_outbound_allowed(phone_number):
+                raise ValueError("Outbound SMS blocked: phone number is not in SMS_ALLOWED_NUMBERS.")
             result = await self.provider.send(phone_number=phone_number, body=body)
             message = SMSMessage(
                 provider_message_id=result.provider_message_id,
@@ -98,7 +122,7 @@ class SMSService:
                     simulation_event.status = SimulationStatus.SMS_SENT
             await session.commit()
             return message
-        except httpx.HTTPError as exc:
+        except (httpx.HTTPError, ValueError) as exc:
             logger.exception("sms_send_failed", extra={"phone_number": phone_number, "error": str(exc)})
             message = SMSMessage(
                 provider_message_id=f"failed-{uuid4().hex[:16]}",

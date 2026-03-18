@@ -72,6 +72,7 @@ class Settings(BaseSettings):
     weather_mock_fallback: bool = Field(default=True, alias="WEATHER_MOCK_FALLBACK")
 
     sms_provider: str = Field(default="mock", alias="SMS_PROVIDER")
+    sms_allowed_numbers: str = Field(default="", alias="SMS_ALLOWED_NUMBERS")
     sms_from_number: str = Field(default="DOTSWAHILI", alias="SMS_FROM_NUMBER")
     twilio_account_sid: str | None = Field(default=None, alias="TWILIO_ACCOUNT_SID")
     twilio_auth_token: str | None = Field(default=None, alias="TWILIO_AUTH_TOKEN")
