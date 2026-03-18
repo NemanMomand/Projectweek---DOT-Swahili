@@ -1,5 +1,5 @@
 from functools import lru_cache
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -17,6 +17,13 @@ def _is_local_or_placeholder_db_host(hostname: str | None) -> bool:
         "db",
         "real_host",
     }
+
+
+def _is_cloudsql_socket_url(db_url: str) -> bool:
+    parsed = urlparse(db_url)
+    qs = parse_qs(parsed.query or "")
+    socket_hosts = qs.get("host", [])
+    return any(str(value).startswith("/cloudsql/") for value in socket_hosts)
 
 
 class Settings(BaseSettings):
@@ -126,7 +133,7 @@ class Settings(BaseSettings):
                     f"{var_name} is using template placeholders. Set a real cloud PostgreSQL URL before starting the app."
                 )
 
-            if is_production_like and _is_local_or_placeholder_db_host(host):
+            if is_production_like and _is_local_or_placeholder_db_host(host) and not _is_cloudsql_socket_url(db_url):
                 raise ValueError(
                     f"{var_name} must use a real cloud database host in production/Cloud Run. Current host: {host or 'missing'}"
                 )

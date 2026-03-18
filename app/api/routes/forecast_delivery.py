@@ -54,12 +54,14 @@ async def dispatch_forecast_delivery_now(
     force: bool = Query(default=False),
     phone_number: str | None = Query(default=None),
     language: PreferredLanguage = Query(default=PreferredLanguage.EN),
+    bilingual: bool = Query(default=False),
 ) -> ForecastDeliveryDispatchResponse:
     if phone_number:
         result = await service.send_tomorrow_forecast_to_phone(
             session=session,
             phone_number=phone_number,
             language=language,
+            bilingual=bilingual,
         )
     else:
         result = await service.send_tomorrow_forecast_if_due(session, force=force)

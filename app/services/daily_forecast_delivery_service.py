@@ -134,6 +134,7 @@ class DailyForecastDeliveryService:
         session: AsyncSession,
         phone_number: str,
         language: PreferredLanguage = PreferredLanguage.EN,
+        bilingual: bool = False,
     ) -> dict:
         source_farmer = await FarmerRepository(session).get_by_phone(phone_number)
         if source_farmer is None:
@@ -169,13 +170,25 @@ class DailyForecastDeliveryService:
                     "error": "Forecast payload had no daily timeline.",
                 }
             tomorrow = days[1] if len(days) > 1 else days[0]
-            message = self._build_message(
-                language=language,
-                precip_mm=float(tomorrow.get("precip", 0.0) or 0.0),
-                conditions=str(tomorrow.get("conditions") or "Unknown"),
-                cloud_cover=tomorrow.get("cloudcover"),
-                forecast_date=str(tomorrow.get("datetime") or "tomorrow"),
-            )
+            precip_mm = float(tomorrow.get("precip", 0.0) or 0.0)
+            conditions = str(tomorrow.get("conditions") or "Unknown")
+            cloud_cover = tomorrow.get("cloudcover")
+            forecast_date = str(tomorrow.get("datetime") or "tomorrow")
+            if bilingual:
+                message = self._build_bilingual_message(
+                    precip_mm=precip_mm,
+                    conditions=conditions,
+                    cloud_cover=cloud_cover,
+                    forecast_date=forecast_date,
+                )
+            else:
+                message = self._build_message(
+                    language=language,
+                    precip_mm=precip_mm,
+                    conditions=conditions,
+                    cloud_cover=cloud_cover,
+                    forecast_date=forecast_date,
+                )
             sms = await self.sms_service.send_message(session=session, phone_number=phone_number, body=message)
             sent = 1 if sms.status.value != "failed" else 0
             skipped = 0 if sent else 1
@@ -230,3 +243,26 @@ class DailyForecastDeliveryService:
             f"Tomorrow forecast ({forecast_date}): around {precip_mm:.1f} mm rain, "
             f"about {sunny_pct}% sunny. Conditions: {conditions}."
         )
+
+    def _build_bilingual_message(
+        self,
+        precip_mm: float,
+        conditions: str,
+        cloud_cover: float | int | None,
+        forecast_date: str,
+    ) -> str:
+        english = self._build_message(
+            language=PreferredLanguage.EN,
+            precip_mm=precip_mm,
+            conditions=conditions,
+            cloud_cover=cloud_cover,
+            forecast_date=forecast_date,
+        )
+        swahili = self._build_message(
+            language=PreferredLanguage.SW,
+            precip_mm=precip_mm,
+            conditions=conditions,
+            cloud_cover=cloud_cover,
+            forecast_date=forecast_date,
+        )
+        return f"{english} | {swahili}"
