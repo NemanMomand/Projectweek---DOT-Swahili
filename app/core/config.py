@@ -1,7 +1,22 @@
 from functools import lru_cache
+from urllib.parse import urlparse
 
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _is_local_or_placeholder_db_host(hostname: str | None) -> bool:
+    if not hostname:
+        return True
+    normalized = hostname.strip().lower()
+    return normalized in {
+        "localhost",
+        "127.0.0.1",
+        "0.0.0.0",
+        "postgres",
+        "db",
+        "real_host",
+    }
 
 
 class Settings(BaseSettings):
@@ -23,11 +38,11 @@ class Settings(BaseSettings):
     port: int = Field(default=8000, alias="PORT")
 
     database_url: str = Field(
-        default="postgresql+asyncpg://postgres:postgres@localhost:5432/dotswahili",
+        default="postgresql+asyncpg://USER:PASSWORD@REAL_HOST:5432/DBNAME",
         alias="DATABASE_URL",
     )
     alembic_database_url: str = Field(
-        default="postgresql+psycopg://postgres:postgres@localhost:5432/dotswahili",
+        default="postgresql+psycopg://USER:PASSWORD@REAL_HOST:5432/DBNAME",
         alias="ALEMBIC_DATABASE_URL",
     )
 
@@ -89,6 +104,34 @@ class Settings(BaseSettings):
         if cleaned.upper() in {"YOUR_API_KEY", "CHANGE_ME", "CHANGEME"}:
             return None
         return cleaned
+
+    @model_validator(mode="after")
+    def validate_database_urls(self) -> "Settings":
+        env = self.app_env.strip().lower()
+        is_production_like = env in {"production", "prod", "staging", "cloudrun", "cloud-run"}
+        db_urls = {
+            "DATABASE_URL": self.database_url,
+            "ALEMBIC_DATABASE_URL": self.alembic_database_url,
+        }
+
+        for var_name, db_url in db_urls.items():
+            parsed = urlparse(db_url)
+            username = (parsed.username or "").strip().upper()
+            password = (parsed.password or "").strip().upper()
+            path = (parsed.path or "").strip().strip("/").upper()
+            host = parsed.hostname
+
+            if username == "USER" or password == "PASSWORD" or path == "DBNAME":
+                raise ValueError(
+                    f"{var_name} is using template placeholders. Set a real cloud PostgreSQL URL before starting the app."
+                )
+
+            if is_production_like and _is_local_or_placeholder_db_host(host):
+                raise ValueError(
+                    f"{var_name} must use a real cloud database host in production/Cloud Run. Current host: {host or 'missing'}"
+                )
+
+        return self
 
 
 @lru_cache
