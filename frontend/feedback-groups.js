@@ -115,14 +115,31 @@ async function triggerDemoSignal(signal) {
   // Send Swahili message second — this hits threshold=2 and triggers the alert
   await sendInbound(phone, texts.sw, `ui-${signal}-${ts}-sw`);
 
-  await sendDirectSms(
-    phone,
-    `DOT Swahili: ${signal.toUpperCase()} waarschuwing werd geactiveerd.`
-  );
+  await sendCallThenSms(phone, signal);
 
   setDemoStatus(
-    `2x ${signal.toUpperCase()} verstuurd (EN + SW) → alert getriggerd voor ${phone}.`
+    `2x ${signal.toUpperCase()} verstuurd (EN + SW) -> call gestart en daarna sms verstuurd naar ${phone}.`
   );
+}
+
+async function sendCallThenSms(phone, signal) {
+  const signalName = String(signal || "alert").toUpperCase();
+  const payload = {
+    phone_number: phone,
+    message_en: `Dot Swahili voice alert. ${signalName} risk has been detected for your farm area.`,
+    message_sw: `Tahadhari ya Dot Swahili kwa sauti. Hatari ya ${signalName} imegunduliwa kwa eneo lako la shamba.`,
+    sms_body: `DOT Swahili: ${signalName} warning activated for your area.`,
+    delay_seconds: 8,
+  };
+  const res = await fetch("/api/v1/voice/call-then-sms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error(`Call+SMS failed (${res.status})`);
+  }
+  return res.json();
 }
 
 async function sendDirectSms(phone, body) {
