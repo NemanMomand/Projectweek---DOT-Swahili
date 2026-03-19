@@ -18,3 +18,4 @@ venv/
 # Local runtime state
 local.db
 data/forecast_delivery_settings.json
+.env
