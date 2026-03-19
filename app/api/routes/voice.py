@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from html import escape
 
-from fastapi import APIRouter, Depends, Form, Response
+import httpx
+from fastapi import APIRouter, Depends, Form, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_session
@@ -19,11 +20,29 @@ router = APIRouter(prefix="/api/v1/voice", tags=["voice"])
 
 @router.post("/call", response_model=VoiceCallResponse)
 async def create_voice_call(payload: VoiceCallRequest) -> VoiceCallResponse:
-    result = await TwilioVoiceService().create_call(
-        phone_number=payload.phone_number,
-        message_en=payload.message_en,
-        message_sw=payload.message_sw,
-    )
+    try:
+        result = await TwilioVoiceService().create_call(
+            phone_number=payload.phone_number,
+            message_en=payload.message_en,
+            message_sw=payload.message_sw,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except httpx.HTTPStatusError as exc:
+        detail = "Twilio rejected the voice call request."
+        try:
+            payload = exc.response.json()
+            twilio_message = payload.get("message")
+            if twilio_message:
+                detail = f"{detail} {twilio_message}"
+        except ValueError:
+            pass
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=detail) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Voice provider request failed. Check Twilio connectivity and credentials.",
+        ) from exc
     return VoiceCallResponse(
         call_sid=result.call_sid,
         status=result.status,
@@ -37,14 +56,32 @@ async def create_voice_call_then_sms(
     payload: VoiceCallThenSMSRequest,
     session: AsyncSession = Depends(get_session),
 ) -> VoiceCallThenSMSResponse:
-    call_result, sms_provider_message_id, sms_status = await call_then_sms(
-        session=session,
-        phone_number=payload.phone_number,
-        message_en=payload.message_en,
-        message_sw=payload.message_sw,
-        sms_body=payload.sms_body,
-        delay_seconds=payload.delay_seconds,
-    )
+    try:
+        call_result, sms_provider_message_id, sms_status = await call_then_sms(
+            session=session,
+            phone_number=payload.phone_number,
+            message_en=payload.message_en,
+            message_sw=payload.message_sw,
+            sms_body=payload.sms_body,
+            delay_seconds=payload.delay_seconds,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except httpx.HTTPStatusError as exc:
+        detail = "Twilio rejected the call-then-sms request."
+        try:
+            payload = exc.response.json()
+            twilio_message = payload.get("message")
+            if twilio_message:
+                detail = f"{detail} {twilio_message}"
+        except ValueError:
+            pass
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=detail) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Voice provider request failed. Check Twilio connectivity and credentials.",
+        ) from exc
     return VoiceCallThenSMSResponse(
         call_sid=call_result.call_sid,
         call_status=call_result.status,
