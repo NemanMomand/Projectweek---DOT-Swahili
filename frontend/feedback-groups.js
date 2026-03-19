@@ -137,7 +137,14 @@ async function sendCallThenSms(phone, signal) {
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
-    throw new Error(`Call+SMS failed (${res.status})`);
+    let detail = "";
+    try {
+      const data = await res.json();
+      detail = data?.detail || data?.message || "";
+    } catch {
+      detail = "";
+    }
+    throw new Error(detail ? `Call+SMS failed (${res.status}): ${detail}` : `Call+SMS failed (${res.status})`);
   }
   return res.json();
 }
@@ -153,7 +160,14 @@ async function sendDirectSms(phone, body) {
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
-    throw new Error(`Direct SMS failed (${res.status})`);
+    let detail = "";
+    try {
+      const data = await res.json();
+      detail = data?.detail || data?.message || "";
+    } catch {
+      detail = "";
+    }
+    throw new Error(detail ? `Direct SMS failed (${res.status}): ${detail}` : `Direct SMS failed (${res.status})`);
   }
 }
 
