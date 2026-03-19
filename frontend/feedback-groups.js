@@ -38,7 +38,7 @@ function getTargetPhone() {
   const input = document.getElementById("target-phone");
   const phone = (input?.value || "").trim();
   if (!phone.startsWith("+") || phone.length < 9) {
-    throw new Error("Gebruik een geldig nummer in E.164 formaat, bv +32470770258");
+    throw new Error("Gebruik een geldig nummer in E.164 formaat, bv +32470591544");
   }
   return phone;
 }
